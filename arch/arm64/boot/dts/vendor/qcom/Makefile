@@ -1,4 +1,17 @@
 ifeq ($(CONFIG_BUILD_ARM64_DT_OVERLAY),y)
+
+dtbo-$(CONFIG_ARCH_BENGAL) += \
+                bengal-idp-overlay.dtbo
+
+bengal-idp-overlay.dtbo-base := bengal-idp.dtb
+
+else
+dtb-$(CONFIG_ARCH_BENGAL) += \
+		bengal-idp.dtb
+
+endif
+
+ifeq ($(CONFIG_BUILD_ARM64_DT_OVERLAY),y)
         dtbo-$(CONFIG_ARCH_KONA) += \
                 kona-cdp-overlay.dtbo \
                 kona-cdp-lcd-overlay.dtbo \
@@ -125,24 +138,6 @@ dtb-$(CONFIG_ARCH_LAGOON) += \
 		lagoon-cdp.dtb \
 		lagoon-atp.dtb \
 		lagoon-qrd.dtb
-endif
-
-ifeq ($(CONFIG_BUILD_ARM64_DT_OVERLAY),y)
-        dtbo-$(CONFIG_ARCH_BENGAL) += \
-                bengal-rumi-overlay.dtbo \
-                bengal-qrd-overlay.dtbo \
-                bengal-idp-overlay.dtbo \
-                bengal-idp-usbc-overlay.dtbo
-
-bengal-rumi-overlay.dtbo-base := bengal.dtb
-bengal-qrd-overlay.dtbo-base := bengal.dtb
-bengal-idp-overlay.dtbo-base := bengal.dtb
-bengal-idp-usbc-overlay.dtbo-base := bengal.dtb
-else
-dtb-$(CONFIG_ARCH_BENGAL) += bengal-rumi.dtb \
-                bengal-qrd.dtb \
-		bengal-idp.dtb \
-		bengal-idp-usbc.dtb
 endif
 
 ifeq ($(CONFIG_BUILD_ARM64_DT_OVERLAY),y)
