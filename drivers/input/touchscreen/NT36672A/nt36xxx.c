@@ -42,6 +42,10 @@
 #include <linux/jiffies.h>
 #endif /* #if NVT_TOUCH_ESD_PROTECT */
 
+#ifdef CONFIG_TOUCHSCREEN_COMMON
+#include <linux/input/tp_common.h>
+#endif
+
 #if NVT_TOUCH_ESD_PROTECT
 static struct delayed_work nvt_esd_check_work;
 static struct workqueue_struct *nvt_esd_check_wq;
@@ -124,6 +128,33 @@ const uint16_t gesture_key_array[] = {
 	KEY_WAKEUP,  //GESTURE_SLIDE_RIGHT
 };
 #endif
+
+#if WAKEUP_GESTURE
+#ifdef CONFIG_TOUCHSCREEN_COMMON
+static ssize_t double_tap_show(struct kobject *kobj,
+		struct kobj_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%d\n", enable_gesture_mode);
+}
+
+static ssize_t double_tap_store(struct kobject *kobj,
+		struct kobj_attribute *attr, const char *buf, size_t count)
+{
+	int rc, val;
+
+	rc = kstrtoint(buf, 10, &val);
+	if (rc)
+		return -EINVAL;
+	enable_gesture_mode = !!val;
+	return count;
+}
+
+static struct tp_common_ops double_tap_ops = {
+	.show = double_tap_show,
+	.store = double_tap_store
+};
+#endif
+#endif // WAKEUP_GESTURE
 
 #ifdef CONFIG_MTK_SPI
 const struct mt_chip_conf spi_ctrdata = {
@@ -1775,6 +1806,14 @@ static int32_t nvt_ts_probe(struct spi_device *client)
 		NVT_ERR("Failed to perform SPI setup\n");
 		goto err_spi_setup;
 	}
+
+#if defined(CONFIG_TOUCHSCREEN_COMMON) && WAKEUP_GESTURE
+	ret = tp_common_set_double_tap_ops(&double_tap_ops);
+	if (ret < 0) {
+		NVT_ERR("%s: Failed to create double_tap node err=%d\n",
+				__func__, ret);
+	}
+#endif
 
 #ifdef CONFIG_MTK_SPI
     /* old usage of MTK spi API */
