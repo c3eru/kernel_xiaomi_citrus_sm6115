@@ -90,6 +90,7 @@ static void nvt_ts_late_resume(struct early_suspend *h);
 #if WAKEUP_GESTURE
 static int32_t nvt_ts_get_regulator(bool get);
 static int32_t nvt_ts_enable_regulator(bool en);
+bool enable_gesture_mode = true;
 #endif
 
 extern int hq_regiser_hw_info(enum hardware_id id, char *device_name);
@@ -2296,9 +2297,10 @@ static int32_t nvt_ts_suspend(struct device *dev)
 	}
 
 
-#if !WAKEUP_GESTURE
-	nvt_irq_enable(false);
+#if WAKEUP_GESTURE
+	if (!enable_gesture_mode)
 #endif
+		nvt_irq_enable(false);
 
 #if NVT_TOUCH_ESD_PROTECT
 	NVT_LOG("cancel delayed work sync\n");
@@ -2314,30 +2316,31 @@ static int32_t nvt_ts_suspend(struct device *dev)
 
 #if WAKEUP_GESTURE
 	//---write command to enter "wakeup gesture mode"---
-	if (nvt_gesture_flag == true) {
-    	    if (nvt_ts_enable_regulator(true) < 0) 
-     	  	NVT_LOG("Failed to enable regulator");
-	buf[0] = EVENT_MAP_HOST_CMD;
-	buf[1] = 0x13;
-	CTP_SPI_WRITE(ts->client, buf, 2);
+	if (enable_gesture_mode) {
+		if (nvt_gesture_flag == true) {
+			if (nvt_ts_enable_regulator(true) < 0)
+			    NVT_LOG("Failed to enable regulator");
+		}
+		buf[0] = EVENT_MAP_HOST_CMD;
+		buf[1] = 0x13;
+		CTP_SPI_WRITE(ts->client, buf, 2);
 
-	enable_irq_wake(ts->client->irq);
+		enable_irq_wake(ts->client->irq);
 
-	NVT_LOG("Enabled touch wakeup gesture\n");
+		NVT_LOG("Enabled touch wakeup gesture\n");
 	} else {
+#else // WAKEUP_GESTURE
+		//---write command to enter "deep sleep mode"---
 		buf[0] = EVENT_MAP_HOST_CMD;
 		buf[1] = 0x11;
 		CTP_SPI_WRITE(ts->client, buf, 2);
-	    	if (nvt_ts_enable_regulator(false) < 0) 
-	     	  	NVT_LOG("Failed to enable regulator");
-	}
-
-#else // WAKEUP_GESTURE
-	//---write command to enter "deep sleep mode"---
-	buf[0] = EVENT_MAP_HOST_CMD;
-	buf[1] = 0x11;
-	CTP_SPI_WRITE(ts->client, buf, 2);
+		if (nvt_ts_enable_regulator(false) < 0) {
+			NVT_LOG("Failed to enable regulator");
+		}
 #endif // WAKEUP_GESTURE
+#if WAKEUP_GESTURE
+	}
+#endif
 
 	mutex_unlock(&ts->lock);
 
@@ -2391,9 +2394,10 @@ static int32_t nvt_ts_resume(struct device *dev)
 		nvt_check_fw_reset_state(RESET_STATE_REK);
 	}
 
-#if !WAKEUP_GESTURE
-	nvt_irq_enable(true);
+#if WAKEUP_GESTURE
+	if (!enable_gesture_mode)
 #endif
+		nvt_irq_enable(true);
 
 #if NVT_TOUCH_ESD_PROTECT
 	nvt_esd_check_enable(false);
