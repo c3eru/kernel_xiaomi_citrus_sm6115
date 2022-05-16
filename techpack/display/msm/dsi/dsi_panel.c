@@ -496,16 +496,18 @@ exit:
 	return rc;
 }
 
+extern bool enable_gesture_mode;
 static int dsi_panel_power_off(struct dsi_panel *panel)
 {
 	int rc = 0;
+	bool skip_reset_gpio = false;
 
 	//return 0;
 	if (gpio_is_valid(panel->reset_config.disp_en_gpio))
 		gpio_set_value(panel->reset_config.disp_en_gpio, 0);
 
-
-	if (gpio_is_valid(panel->reset_config.reset_gpio))
+	skip_reset_gpio = enable_gesture_mode;
+	if (!skip_reset_gpio && gpio_is_valid(panel->reset_config.reset_gpio))
 		gpio_set_value(panel->reset_config.reset_gpio, 1);//set high, mod by chenwenmin
 
 	if (gpio_is_valid(panel->reset_config.reset_gpio) &&
