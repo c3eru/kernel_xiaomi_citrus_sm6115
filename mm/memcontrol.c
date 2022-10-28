@@ -4780,7 +4780,7 @@ static struct page *mc_handle_swap_pte(struct vm_area_struct *vma,
 	struct page *page = NULL;
 	swp_entry_t ent = pte_to_swp_entry(ptent);
 
-	if (!(mc.flags & MOVE_ANON) || non_swap_entry(ent))
+	if (!(mc.flags & MOVE_ANON))
 		return NULL;
 
 	/*
@@ -4798,6 +4798,9 @@ static struct page *mc_handle_swap_pte(struct vm_area_struct *vma,
 			return NULL;
 		return page;
 	}
+
+	if (non_swap_entry(ent))
+		return NULL;
 
 	/*
 	 * Because lookup_swap_cache() updates some statistics counter,
@@ -6401,7 +6404,7 @@ static int __init cgroup_memory(char *s)
 		if (!strcmp(token, "nokmem"))
 			cgroup_memory_nokmem = true;
 	}
-	return 0;
+	return 1;
 }
 __setup("cgroup.memory=", cgroup_memory);
 

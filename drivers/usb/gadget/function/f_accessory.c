@@ -328,6 +328,7 @@ static void acc_complete_set_string(struct usb_ep *ep, struct usb_request *req)
 		string_dest = dev->serial;
 		break;
 	}
+
 	if (string_dest) {
 		unsigned long flags;
 
